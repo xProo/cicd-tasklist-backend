@@ -54,14 +54,7 @@ pipeline {
 
         stage('Security - Trivy filesystem') {
             steps {
-                sh '''
-                    docker run --rm \
-                      -v "${WORKSPACE}:/src" \
-                      aquasec/trivy:latest fs \
-                      --severity HIGH,CRITICAL \
-                      --exit-code 0 \
-                      /src
-                '''
+                sh 'trivy fs --severity HIGH,CRITICAL --exit-code 0 .'
             }
         }
 
@@ -91,31 +84,20 @@ pipeline {
 
         stage('Docker build') {
             steps {
-                sh "docker build -t ${DOCKER_IMAGE}:${IMAGE_TAG} -t ${DOCKER_IMAGE}:latest ."
+                sh "/usr/bin/docker build -t ${DOCKER_IMAGE}:${IMAGE_TAG} -t ${DOCKER_IMAGE}:latest ."
             }
         }
 
         stage('Security - Trivy image') {
             steps {
-                sh """
-                    docker run --rm \
-                      -v /var/run/docker.sock:/var/run/docker.sock \
-                      aquasec/trivy:latest image \
-                      --severity HIGH,CRITICAL \
-                      --exit-code 0 \
-                      ${DOCKER_IMAGE}:${IMAGE_TAG}
-                """
+                sh "trivy image --severity HIGH,CRITICAL --exit-code 0 ${DOCKER_IMAGE}:${IMAGE_TAG}"
             }
         }
 
         stage('Generate SBOM') {
             steps {
                 sh """
-                    docker run --rm \
-                      -v /var/run/docker.sock:/var/run/docker.sock \
-                      anchore/syft:latest \
-                      packages docker:${DOCKER_IMAGE}:${IMAGE_TAG} \
-                      -o spdx-json > sbom-spdx.json
+                    syft packages docker:${DOCKER_IMAGE}:${IMAGE_TAG} -o spdx-json > sbom-spdx.json
                 """
                 archiveArtifacts artifacts: 'sbom-spdx.json', fingerprint: true
             }
@@ -129,9 +111,9 @@ pipeline {
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push ${DOCKER_IMAGE}:${IMAGE_TAG}
-                        docker push ${DOCKER_IMAGE}:latest
+                        echo "$DOCKER_PASS" | /usr/bin/docker login -u "$DOCKER_USER" --password-stdin
+                        /usr/bin/docker push ${DOCKER_IMAGE}:${IMAGE_TAG}
+                        /usr/bin/docker push ${DOCKER_IMAGE}:latest
                     '''
                 }
             }
