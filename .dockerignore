@@ -1,0 +1,13 @@
+node_modules
+dist
+coverage
+reports
+.git
+.gitignore
+.env
+.env.*
+*.md
+.scannerwork
+sbom-spdx.json
+Jenkinsfile
+sonar-project.properties
