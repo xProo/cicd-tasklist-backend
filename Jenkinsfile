@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         APP_NAME = 'tasklist-backend'
-        DOCKER_IMAGE = 'xproo/tasklist-backend'
+        DOCKER_IMAGE = 'sohane95/tasklist-backend'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
     }
 
